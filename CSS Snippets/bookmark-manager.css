@@ -1,0 +1,362 @@
+/* ================================================================
+   Obsidian Bookmark Manager — Gallery Layout (V3)
+   ================================================================
+   Place this file in:  <vault>/.obsidian/snippets/bookmark-manager.css
+   Then enable it in:   Settings → Appearance → CSS Snippets
+   ================================================================
+
+   Layout: CSS Multi-Column gallery (Pinterest-style).
+   Cards preserve image aspect ratios — no cropping.
+   No Obsidian callout selectors — everything targets .bookmark-card
+   and its children directly.
+
+   Compatible with: Reading View, Live Preview, Desktop, Android,
+   iPhone, iPad.
+   ================================================================ */
+
+
+/* =================================================================
+   1. GALLERY CONTAINER — Multi-Column Layout
+   =================================================================
+   Targets the Obsidian preview/reading container so all bookmark
+   cards flow into a masonry-style column layout automatically.
+   ================================================================= */
+
+.markdown-preview-view,
+.markdown-reading-view .markdown-preview-section {
+    column-width: 320px;
+    column-gap: 16px;
+    column-fill: balance;
+}
+
+
+/* =================================================================
+   2. BOOKMARK CARD
+   ================================================================= */
+
+.bookmark-card {
+    break-inside: avoid;
+    display: flex;
+    flex-direction: column;
+    background: var(--background-secondary);
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 16px;
+    overflow: hidden;
+    margin-bottom: 16px;
+    transition: transform 200ms ease, box-shadow 200ms ease;
+    will-change: transform;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+}
+
+.bookmark-card:hover {
+    transform: translateY(-3px) scale(1.01);
+    box-shadow:
+        0 12px 28px rgba(0, 0, 0, 0.10),
+        0 4px 10px rgba(0, 0, 0, 0.05);
+}
+
+
+/* =================================================================
+   3. IMAGE WRAPPER & IMAGE
+   ================================================================= */
+
+.bookmark-image-wrapper {
+    width: 100%;
+    overflow: hidden;
+    line-height: 0;
+}
+
+/* Preserve every aspect ratio — no cropping */
+.bookmark-image {
+    display: block;
+    width: 100%;
+    height: auto;
+}
+
+
+/* =================================================================
+   4. PLACEHOLDER (no image)
+   ================================================================= */
+
+.bookmark-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: 140px;
+    background: var(--background-modifier-border);
+    color: var(--text-muted);
+    font-size: 0.82rem;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    user-select: none;
+}
+
+
+/* =================================================================
+   5. CONTENT AREA
+   ================================================================= */
+
+.bookmark-content {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 14px 16px 16px;
+}
+
+
+/* =================================================================
+   6. HEADER — Favicon + Domain
+   ================================================================= */
+
+.bookmark-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.bookmark-favicon {
+    width: 16px;
+    height: 16px;
+    border-radius: 3px;
+    flex-shrink: 0;
+    object-fit: contain;
+}
+
+.bookmark-domain {
+    font-size: 0.78rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+
+/* =================================================================
+   7. TITLE
+   ================================================================= */
+
+.bookmark-title {
+    font-size: 0.95rem;
+    font-weight: 650;
+    line-height: 1.35;
+    color: var(--text-normal);
+    margin: 0;
+
+    /* Clamp to 2 lines */
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+
+/* =================================================================
+   8. DESCRIPTION
+   ================================================================= */
+
+.bookmark-description {
+    font-size: 0.82rem;
+    line-height: 1.5;
+    color: var(--text-muted);
+    margin: 0;
+
+    /* Clamp to 3 lines */
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+
+/* =================================================================
+   9. TAGS
+   ================================================================= */
+
+.bookmark-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+}
+
+.bookmark-tag {
+    display: inline-flex;
+    align-items: center;
+    background: rgba(59, 130, 246, 0.10);
+    color: rgb(59, 130, 246);
+    font-size: 0.72rem;
+    font-weight: 550;
+    padding: 2px 10px;
+    border-radius: 999px;
+    white-space: nowrap;
+    line-height: 1.6;
+}
+
+
+/* =================================================================
+   10. COLLECTIONS
+   ================================================================= */
+
+.bookmark-collections {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+}
+
+.bookmark-collection {
+    display: inline-flex;
+    align-items: center;
+    background: rgba(139, 92, 246, 0.10);
+    color: rgb(139, 92, 246);
+    font-size: 0.72rem;
+    font-weight: 550;
+    padding: 2px 10px;
+    border-radius: 999px;
+    white-space: nowrap;
+    line-height: 1.6;
+}
+
+
+/* =================================================================
+   11. FOOTER — Date + Open Link
+   ================================================================= */
+
+.bookmark-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 8px;
+    border-top: 1px solid var(--background-modifier-border);
+    margin-top: 4px;
+}
+
+.bookmark-date {
+    font-size: 0.74rem;
+    color: var(--text-muted);
+    white-space: nowrap;
+}
+
+.bookmark-open {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--text-accent);
+    text-decoration: none;
+    white-space: nowrap;
+    padding: 3px 10px;
+    border-radius: 6px;
+    transition: background 150ms ease, color 150ms ease;
+}
+
+.bookmark-open:hover {
+    background: var(--background-modifier-hover);
+    text-decoration: none;
+}
+
+
+/* =================================================================
+   12. DARK MODE
+   ================================================================= */
+
+.theme-dark .bookmark-card {
+    background: var(--background-secondary-alt, var(--background-secondary));
+    border-color: var(--background-modifier-border);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+}
+
+.theme-dark .bookmark-card:hover {
+    box-shadow:
+        0 12px 28px rgba(0, 0, 0, 0.28),
+        0 4px 10px rgba(0, 0, 0, 0.14);
+}
+
+.theme-dark .bookmark-placeholder {
+    background: var(--background-modifier-border);
+}
+
+.theme-dark .bookmark-tag {
+    background: rgba(59, 130, 246, 0.15);
+    color: rgb(96, 165, 250);
+}
+
+.theme-dark .bookmark-collection {
+    background: rgba(139, 92, 246, 0.15);
+    color: rgb(167, 139, 250);
+}
+
+
+/* =================================================================
+   13. RESPONSIVE — Tablet (~2 columns)
+   ================================================================= */
+
+@media (max-width: 900px) {
+    .markdown-preview-view,
+    .markdown-reading-view .markdown-preview-section {
+        column-width: 280px;
+        column-gap: 14px;
+    }
+
+    .bookmark-card {
+        margin-bottom: 14px;
+    }
+}
+
+
+/* =================================================================
+   14. RESPONSIVE — Mobile (2 → 1 column, natural flow)
+   ================================================================= */
+
+@media (max-width: 600px) {
+    .markdown-preview-view,
+    .markdown-reading-view .markdown-preview-section {
+        column-width: 200px;
+        column-gap: 10px;
+    }
+
+    .bookmark-card {
+        margin-bottom: 10px;
+        border-radius: 12px;
+    }
+
+    .bookmark-content {
+        padding: 10px 12px 14px;
+        gap: 6px;
+    }
+
+    .bookmark-title {
+        font-size: 0.88rem;
+    }
+
+    .bookmark-description {
+        font-size: 0.78rem;
+        -webkit-line-clamp: 2;
+    }
+
+    /* Disable hover lift on touch devices */
+    .bookmark-card:hover {
+        transform: none;
+    }
+}
+
+
+/* =================================================================
+   15. PRINT
+   ================================================================= */
+
+@media print {
+    .markdown-preview-view,
+    .markdown-reading-view .markdown-preview-section {
+        column-count: 2;
+        column-gap: 12px;
+    }
+
+    .bookmark-card {
+        break-inside: avoid;
+        box-shadow: none;
+        border: 1px solid #ddd;
+    }
+
+    .bookmark-card:hover {
+        transform: none;
+    }
+}
