@@ -1,8 +1,7 @@
 /**
- * @fileoverview Markdown builder for the Bookmark Manager (V3 Gallery).
- * @description Renders each bookmark as raw semantic HTML — no Obsidian
- * callouts, no blockquote prefixes. The entire bookmark file becomes a
- * CSS multi-column gallery when combined with bookmark-manager.css.
+ * @fileoverview Markdown builder for the Bookmark Manager (V4 Horizontal List).
+ * @description Renders each bookmark as raw semantic HTML.
+ * The layout uses horizontal cards (image on left, content on right).
  *
  * CSS class names (stable contract):
  *   .bookmark-card, .bookmark-image-wrapper, .bookmark-image,
@@ -24,7 +23,7 @@ const utils = require('./utils');
 /* ------------------------------------------------------------------ */
 
 /** @type {number} Maximum characters for a truncated description. */
-const MAX_DESCRIPTION_LENGTH = 200;
+const MAX_DESCRIPTION_LENGTH = 150;
 
 /* ------------------------------------------------------------------ */
 /*  HTML escaping                                                      */
@@ -244,12 +243,12 @@ function buildBookmarkBlock(bookmark) {
     // --- Assemble the <article> HTML ---
     const contentParts = [];
 
+    // Title
+    contentParts.push(`<h3 class="bookmark-title">${escapeHtml(title)}</h3>`);
+
     // Header: favicon + domain
     const headerHtml = buildHeader(domain, faviconUrl);
     if (headerHtml) contentParts.push(headerHtml);
-
-    // Title
-    contentParts.push(`<h3 class="bookmark-title">${escapeHtml(title)}</h3>`);
 
     // Description
     if (description) {

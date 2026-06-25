@@ -373,124 +373,23 @@ var require_parser = __commonJS({
     var config2 = require_config();
     var utils2 = require_utils();
     var logger2 = require_logger();
-    var TYPE_TO_FILENAME = {
-      youtube: "Youtube",
-      github: "GitHub",
-      website: "Websites",
-      reddit: "Reddit",
-      amazon: "Amazon",
-      twitter: "Twitter",
-      stackoverflow: "StackOverflow",
-      wikipedia: "Wikipedia",
-      medium: "Medium",
-      article: "Articles",
-      video: "Videos",
-      image: "Images",
-      document: "Documents",
-      podcast: "Podcasts",
-      news: "News",
-      social: "Social",
-      shopping: "Shopping",
-      tool: "Tools",
-      reference: "References",
-      linkedin: "LinkedIn"
-    };
-    var DOMAIN_TO_FILENAME = {
-      "youtube.com": "Youtube",
-      "youtu.be": "Youtube",
-      "github.com": "GitHub",
-      "gitlab.com": "GitLab",
-      "reddit.com": "Reddit",
-      "old.reddit.com": "Reddit",
-      "amazon.com": "Amazon",
-      "amazon.co.uk": "Amazon",
-      "amazon.in": "Amazon",
-      "amazon.de": "Amazon",
-      "twitter.com": "Twitter",
-      "x.com": "Twitter",
-      "stackoverflow.com": "StackOverflow",
-      "stackexchange.com": "StackOverflow",
-      "wikipedia.org": "Wikipedia",
-      "en.wikipedia.org": "Wikipedia",
-      "medium.com": "Medium",
-      "linkedin.com": "LinkedIn",
-      "instagram.com": "Instagram",
-      "facebook.com": "Facebook",
-      "twitch.tv": "Twitch",
-      "vimeo.com": "Vimeo",
-      "notion.so": "Notion",
-      "figma.com": "Figma",
-      "dev.to": "DevTo",
-      "hackernews.com": "HackerNews",
-      "news.ycombinator.com": "HackerNews",
-      "pinterest.com": "Pinterest",
-      "tiktok.com": "TikTok",
-      "spotify.com": "Spotify",
-      "apple.com": "Apple",
-      "producthunt.com": "ProductHunt"
-    };
     function resolveFromDomain(domain) {
       if (!domain) return utils2.capitalize(config2.DEFAULT_BOOKMARK_TYPE);
-      if (DOMAIN_TO_FILENAME[domain]) return DOMAIN_TO_FILENAME[domain];
       const parts = domain.split(".");
-      while (parts.length > 2) {
-        parts.shift();
-        const candidate = parts.join(".");
-        if (DOMAIN_TO_FILENAME[candidate]) return DOMAIN_TO_FILENAME[candidate];
-      }
       const baseName = parts.length >= 2 ? parts[parts.length - 2] : domain;
       return utils2.capitalize(baseName);
     }
-    function groupByType(bookmark) {
-      const type = (bookmark.bookmark_type || "").toLowerCase().trim();
-      if (type && TYPE_TO_FILENAME[type]) {
-        return TYPE_TO_FILENAME[type];
-      }
-      const domain = utils2.extractDomain(bookmark.url || "");
-      logger2.debug(`Unknown bookmark_type "${type}", falling back to domain "${domain}"`);
-      return resolveFromDomain(domain);
-    }
-    function groupByDomain(bookmark) {
-      const domain = utils2.extractDomain(bookmark.url || "");
-      return resolveFromDomain(domain);
-    }
-    function groupByCollection(bookmark) {
-      const collections = bookmark.collections || [];
-      if (Array.isArray(collections) && collections.length > 0) {
-        const first = typeof collections[0] === "string" ? collections[0] : collections[0].name || collections[0].title || "";
-        if (first) {
-          return utils2.cleanFilename(utils2.capitalize(first));
-        }
-      }
-      logger2.debug("No collection found, falling back to bookmark_type grouping");
-      return groupByType(bookmark);
-    }
     function getDestinationPath(bookmark) {
-      const strategy = (config2.GROUP_BY || "bookmark_type").toLowerCase().trim();
-      let fileName;
-      switch (strategy) {
-        case "domain":
-          fileName = groupByDomain(bookmark);
-          break;
-        case "collection":
-          fileName = groupByCollection(bookmark);
-          break;
-        case "bookmark_type":
-        default:
-          fileName = groupByType(bookmark);
-          break;
-      }
+      const domain = utils2.extractDomain(bookmark.url || "");
+      let fileName = resolveFromDomain(domain);
       fileName = utils2.cleanFilename(fileName);
       const folder = config2.BOOKMARK_FOLDER || "Bookmarks";
       const fullPath = `${folder}/${fileName}.md`;
-      logger2.debug(`Destination: "${fullPath}" (strategy: ${strategy})`);
+      logger2.debug(`Destination: "${fullPath}" (domain: ${domain})`);
       return fullPath;
     }
     module2.exports = {
       getDestinationPath,
-      // Exported for testing / extension
-      TYPE_TO_FILENAME,
-      DOMAIN_TO_FILENAME,
       resolveFromDomain
     };
   }
@@ -501,7 +400,7 @@ var require_markdown = __commonJS({
   "Scripts/BookmarkManager/markdown.js"(exports2, module2) {
     var config2 = require_config();
     var utils2 = require_utils();
-    var MAX_DESCRIPTION_LENGTH = 200;
+    var MAX_DESCRIPTION_LENGTH = 150;
     function escapeHtml(str) {
       if (!str || typeof str !== "string") return "";
       return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
@@ -595,9 +494,9 @@ ${spans}
         day: "numeric"
       });
       const contentParts = [];
+      contentParts.push(`<h3 class="bookmark-title">${escapeHtml(title)}</h3>`);
       const headerHtml = buildHeader(domain, faviconUrl);
       if (headerHtml) contentParts.push(headerHtml);
-      contentParts.push(`<h3 class="bookmark-title">${escapeHtml(title)}</h3>`);
       if (description) {
         contentParts.push(`<p class="bookmark-description">${escapeHtml(description)}</p>`);
       }
