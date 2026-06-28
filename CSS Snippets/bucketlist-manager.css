@@ -1,0 +1,217 @@
+/* ================================================================
+   Obsidian Bucketlist Manager — Horizontal List Layout (V4)
+   ================================================================
+   Layout: Horizontal cards (YouTube / Raindrop.io style).
+   Carousel on the left (fixed 16:9), content on the right.
+   Images are not cropped (object-fit: contain).
+   ================================================================ */
+
+/* =================================================================
+   1. GALLERY CONTAINER
+   ================================================================= */
+.markdown-preview-view,
+.markdown-reading-view .markdown-preview-section {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    column-count: auto;
+    column-width: auto;
+}
+
+/* =================================================================
+   2. BUCKETLIST CARD
+   ================================================================= */
+.bucketlist-card {
+    display: flex;
+    align-items: stretch;
+    gap: 16px;
+    padding: 16px;
+    background: var(--background-primary);
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 16px;
+    overflow: hidden;
+    margin: 0 0 16px 0; /* Fallback for contexts without gap */
+    transition: transform 200ms ease, box-shadow 200ms ease;
+    will-change: transform;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+}
+
+.bucketlist-card:hover {
+    transform: translateY(-2px);
+    box-shadow:
+        0 8px 24px rgba(0, 0, 0, 0.08),
+        0 4px 10px rgba(0, 0, 0, 0.04);
+}
+
+.bucketlist-completed {
+    opacity: 0.6;
+    filter: grayscale(80%);
+    transition: opacity 0.3s ease, filter 0.3s ease;
+}
+
+.bucketlist-completed:hover {
+    opacity: 0.9;
+    filter: grayscale(20%);
+}
+
+/* =================================================================
+   3. CAROUSEL WRAPPER & CAROUSEL
+   ================================================================= */
+.bucketlist-carousel-wrapper {
+    flex: 0 0 240px;
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+    border-radius: 12px;
+    background: var(--background-secondary);
+    position: relative;
+    display: block;
+}
+
+.bucketlist-carousel {
+    display: flex;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scroll-behavior: smooth;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+.bucketlist-carousel::-webkit-scrollbar {
+    display: none;
+}
+
+.bucketlist-carousel img {
+    flex: 0 0 100%;
+    scroll-snap-align: center;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    object-position: center;
+    background: var(--background-secondary);
+    display: block;
+}
+
+/* =================================================================
+   4. CONTENT AREA
+   ================================================================= */
+.bucketlist-details {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-width: 0; /* Crucial for text truncation inside flexbox */
+}
+
+/* =================================================================
+   5. TITLE
+   ================================================================= */
+.bucketlist-details h3 {
+    margin: 0 0 4px 0;
+}
+
+.bucketlist-details h3 a {
+    font-size: 1.1rem;
+    font-weight: 700;
+    line-height: 1.3;
+    color: var(--text-normal);
+    text-decoration: none;
+
+    /* Clamp to 2 lines */
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    word-wrap: break-word;
+}
+
+/* =================================================================
+   6. MAIN BUTTON
+   ================================================================= */
+.bucketlist-main-btn {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-accent);
+    text-decoration: none;
+    white-space: nowrap;
+    padding: 4px 12px;
+    border-radius: 6px;
+    transition: background 150ms ease, color 150ms ease;
+    background: rgba(var(--color-accent-rgb), 0.1);
+    align-self: flex-start;
+    margin-top: auto;
+}
+
+.bucketlist-main-btn:hover {
+    background: rgba(var(--color-accent-rgb), 0.2);
+    text-decoration: none;
+}
+
+/* =================================================================
+   7. DARK MODE
+   ================================================================= */
+.theme-dark .bucketlist-card {
+    background: var(--background-secondary-alt, var(--background-primary-alt));
+    border-color: var(--background-modifier-border);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.theme-dark .bucketlist-card:hover {
+    box-shadow:
+        0 8px 24px rgba(0, 0, 0, 0.35),
+        0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+.theme-dark .bucketlist-carousel-wrapper,
+.theme-dark .bucketlist-carousel img {
+    background: var(--background-secondary);
+}
+
+/* =================================================================
+   8. RESPONSIVE — Mobile (Horizontal, narrow image)
+   ================================================================= */
+@media (max-width: 600px) {
+    .bucketlist-card {
+        gap: 12px;
+        padding: 12px;
+        border-radius: 12px;
+    }
+
+    .bucketlist-carousel-wrapper {
+        flex: 0 0 140px;
+        border-radius: 8px;
+    }
+
+    .bucketlist-details h3 a {
+        font-size: 0.95rem;
+    }
+
+    /* Disable hover lift on touch devices */
+    .bucketlist-card:hover {
+        transform: none;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+    }
+    
+    .theme-dark .bucketlist-card:hover {
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    }
+}
+
+/* =================================================================
+   9. PRINT
+   ================================================================= */
+@media print {
+    .bucketlist-card {
+        break-inside: avoid;
+        box-shadow: none;
+        border: 1px solid #ddd;
+    }
+
+    .bucketlist-card:hover {
+        transform: none;
+    }
+}

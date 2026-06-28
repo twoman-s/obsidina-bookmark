@@ -5,9 +5,9 @@
  * @module parser
  */
 
-const config = require('./config');
-const utils = require('./utils');
-const logger = require('./logger');
+const config = require('../utils/config');
+const utils = require('../utils/utils');
+const logger = require('../utils/logger');
 
 /**
  * Resolve a filename from a domain string by extracting the base name.

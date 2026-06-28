@@ -15,8 +15,8 @@
  * @module markdown
  */
 
-const config = require('./config');
-const utils = require('./utils');
+const config = require('../utils/config');
+const utils = require('../utils/utils');
 
 /* ------------------------------------------------------------------ */
 /*  Constants                                                          */

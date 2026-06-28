@@ -13,6 +13,11 @@ module.exports = {
     API_URL: "https://comms.oopsops.in/may/api/v1/bookmarks/",
 
     /**
+     * @type {string} Full URL of the bucketlist API endpoint.
+     */
+    BUCKETLIST_API_URL: "https://gmapsscraper.oopsops.in/extract",
+
+    /**
      * @type {string} API authentication token.
      * Sent as: Authorization: Token <API_TOKEN>
      */
@@ -23,6 +28,12 @@ module.exports = {
      * Created automatically if it does not exist.
      */
     BOOKMARK_FOLDER: "Bookmarks",
+
+    /**
+     * @type {string} Root folder inside the Obsidian vault for bucketlist files.
+     * Created automatically if it does not exist.
+     */
+    BUCKETLIST_FOLDER: "Bucketlist",
 
     /**
      * @type {string} Strategy for grouping bookmarks into files.

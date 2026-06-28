@@ -8,13 +8,13 @@
  * @module addBookmark
  */
 
-const config   = require('./config');
-const logger   = require('./logger');
-const utils    = require('./utils');
-const api      = require('./api');
+const config   = require('../utils/config');
+const logger   = require('../utils/logger');
+const utils    = require('../utils/utils');
+const api      = require('../utils/api');
 const parser   = require('./parser');
 const updater  = require('./updater');
-const { createFileManager } = require('./fileManager');
+const { createFileManager } = require('../utils/fileManager');
 
 /* ------------------------------------------------------------------ */
 /*  Notice helper                                                      */

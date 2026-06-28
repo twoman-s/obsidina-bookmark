@@ -19,7 +19,7 @@ var require_config = __commonJS({
       /**
        * @type {string} Full URL of the bucketlist API endpoint.
        */
-      BUCKETLIST_API_URL: "http://127.0.0.1:8001/scrape",
+      BUCKETLIST_API_URL: "https://gmapsscraper.oopsops.in/extract",
       /**
        * @type {string} API authentication token.
        * Sent as: Authorization: Token <API_TOKEN>
@@ -309,316 +309,129 @@ var require_utils = __commonJS({
   }
 });
 
-// Scripts/utils/api.js
+// Scripts/BucketlistManager/api.js
 var require_api = __commonJS({
-  "Scripts/utils/api.js"(exports2, module2) {
+  "Scripts/BucketlistManager/api.js"(exports2, module2) {
     var config2 = require_config();
     var logger2 = require_logger();
-    async function submitBookmark(url) {
-      const endpoint = config2.API_URL;
-      const token = config2.API_TOKEN;
-      const timeout = config2.API_TIMEOUT || 12e4;
-      if (!endpoint) {
-        throw new Error("API_URL is not configured. Please update config.js.");
+    async function scrapeBucketlist(url) {
+      if (!url) {
+        throw new Error("URL is required for scraping");
       }
-      const body = JSON.stringify({ url });
-      logger2.request("POST", endpoint, { url });
-      let controller = null;
-      let timeoutId = null;
-      if (typeof AbortController !== "undefined") {
-        controller = new AbortController();
-        timeoutId = setTimeout(() => controller.abort(), timeout);
-      }
+      const payload = {
+        url,
+        headless: true,
+        lang: "en"
+      };
+      const apiUrl = config2.BUCKETLIST_API_URL || "http://127.0.0.1:8001/scrape";
+      logger2.debug(`Sending scrape request to ${apiUrl}`, payload);
       try {
-        const fetchOptions = {
+        const response = await fetch(apiUrl, {
           method: "POST",
           headers: {
             "Content-Type": "application/json"
-            // 'Authorization': `Token ${token}`,
           },
-          body
-        };
-        if (controller) {
-          fetchOptions.signal = controller.signal;
-        }
-        const response = await fetch(endpoint, fetchOptions);
-        if (timeoutId) clearTimeout(timeoutId);
-        logger2.response(response.status);
+          body: JSON.stringify(payload)
+        });
         if (!response.ok) {
-          const errorBody = await response.text().catch(() => "No details");
-          throw new Error(
-            `API error ${response.status}: ${errorBody}`
-          );
+          const errorText = await response.text();
+          throw new Error(`API responded with status ${response.status}: ${errorText}`);
         }
-        let data;
-        try {
-          data = await response.json();
-        } catch {
-          throw new Error("API returned invalid JSON.");
-        }
-        if (!data || typeof data !== "object") {
-          throw new Error("API returned an empty or malformed response.");
-        }
-        logger2.response(response.status, data);
+        const data = await response.json();
         return data;
       } catch (error) {
-        if (timeoutId) clearTimeout(timeoutId);
-        if (error.name === "AbortError") {
-          throw new Error(
-            `API request timed out after ${Math.round(timeout / 1e3)}s.`
-          );
-        }
-        if (error.message.startsWith("API")) throw error;
-        throw new Error(`Network error: ${error.message}`);
+        logger2.error("Scrape API error:", error);
+        throw error;
       }
     }
-    module2.exports = { submitBookmark };
+    module2.exports = {
+      scrapeBucketlist
+    };
   }
 });
 
-// Scripts/BookmarkManager/parser.js
+// Scripts/BucketlistManager/parser.js
 var require_parser = __commonJS({
-  "Scripts/BookmarkManager/parser.js"(exports2, module2) {
+  "Scripts/BucketlistManager/parser.js"(exports2, module2) {
     var config2 = require_config();
     var utils2 = require_utils();
     var logger2 = require_logger();
-    function resolveFromDomain(domain) {
-      if (!domain) return utils2.capitalize(config2.DEFAULT_BOOKMARK_TYPE);
-      const parts = domain.split(".");
-      const baseName = parts.length >= 2 ? parts[parts.length - 2] : domain;
-      return utils2.capitalize(baseName);
-    }
-    function getDestinationPath(bookmark) {
-      const domain = utils2.extractDomain(bookmark.url || "");
-      let fileName = resolveFromDomain(domain);
-      fileName = utils2.cleanFilename(fileName);
-      const folder = config2.BOOKMARK_FOLDER || "Bookmarks";
-      const fullPath = `${folder}/${fileName}.md`;
-      logger2.debug(`Destination: "${fullPath}" (domain: ${domain})`);
-      return fullPath;
-    }
-    module2.exports = {
-      getDestinationPath,
-      resolveFromDomain
-    };
-  }
-});
-
-// Scripts/BookmarkManager/markdown.js
-var require_markdown = __commonJS({
-  "Scripts/BookmarkManager/markdown.js"(exports2, module2) {
-    var config2 = require_config();
-    var utils2 = require_utils();
-    var MAX_DESCRIPTION_LENGTH = 150;
-    function escapeHtml(str) {
-      if (!str || typeof str !== "string") return "";
-      return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
-    }
-    function resolveImageUrl(bookmark) {
-      const assets = Array.isArray(bookmark.assets) ? bookmark.assets : [];
-      if (config2.USE_DOWNLOADED_ASSETS) {
-        const localAsset = assets.find((a) => a && a.file);
-        if (localAsset) return localAsset.file;
-      }
-      if (bookmark.image_url) return bookmark.image_url;
-      const firstAsset = assets.find((a) => a && a.original_url);
-      if (firstAsset) return firstAsset.original_url;
-      return "";
-    }
-    function formatTags(tags) {
-      if (!Array.isArray(tags) || tags.length === 0) return [];
-      return tags.map((tag) => {
-        const name = typeof tag === "string" ? tag : tag.name || tag.title || "";
-        return name.trim();
-      }).filter(Boolean);
-    }
-    function formatCollections(collections) {
-      if (!Array.isArray(collections) || collections.length === 0) return [];
-      return collections.map((col) => {
-        const name = typeof col === "string" ? col : col.name || col.title || "";
-        return name.trim();
-      }).filter(Boolean);
-    }
-    function truncateDescription(text, maxLen = MAX_DESCRIPTION_LENGTH) {
-      if (!text || text.length <= maxLen) return text || "";
-      const cut = text.slice(0, maxLen);
-      const lastSpace = cut.lastIndexOf(" ");
-      return (lastSpace > 0 ? cut.slice(0, lastSpace) : cut) + "\u2026";
-    }
-    function buildImageWrapper(imageUrl) {
-      if (imageUrl) {
-        return `<div class="bookmark-image-wrapper">
-    <img class="bookmark-image" src="${escapeHtml(imageUrl)}" alt="Bookmark thumbnail" referrerpolicy="no-referrer">
-</div>`;
-      }
-      return `<div class="bookmark-image-wrapper">
-    <div class="bookmark-placeholder">No Preview</div>
-</div>`;
-    }
-    function buildHeader(domain, faviconUrl) {
-      if (!domain) return "";
-      const favicon = faviconUrl ? `
-    <img class="bookmark-favicon" src="${escapeHtml(faviconUrl)}" alt="" referrerpolicy="no-referrer">` : "";
-      return `<div class="bookmark-header">${favicon}
-    <span class="bookmark-domain">${escapeHtml(domain)}</span>
-</div>`;
-    }
-    function buildTags(tags) {
-      if (!tags || tags.length === 0) return "";
-      const spans = tags.map((t) => `    <span class="bookmark-tag">${escapeHtml(t)}</span>`).join("\n");
-      return `<div class="bookmark-tags">
-${spans}
-</div>`;
-    }
-    function buildCollections(collections) {
-      if (!collections || collections.length === 0) return "";
-      const spans = collections.map((c) => `    <span class="bookmark-collection">${escapeHtml(c)}</span>`).join("\n");
-      return `<div class="bookmark-collections">
-${spans}
-</div>`;
-    }
-    function buildFooter(dateStr, url) {
-      if (!dateStr && !url) return "";
-      const datePart = dateStr ? `
-    <span class="bookmark-date">${escapeHtml(dateStr)}</span>` : "";
-      const linkPart = url ? `
-    <a class="bookmark-open" href="${escapeHtml(url)}" rel="noopener noreferrer">Open \u2192</a>` : "";
-      return `<div class="bookmark-footer">${datePart}${linkPart}
-</div>`;
-    }
-    function buildBookmarkBlock(bookmark) {
-      const id = bookmark.external_id || utils2.shortHash(bookmark.url || "");
-      const title = bookmark.title || "Untitled";
-      const url = bookmark.url || "";
-      const description = truncateDescription(bookmark.description || "");
-      const domain = utils2.extractDomain(url);
-      const imageUrl = resolveImageUrl(bookmark);
-      const tags = formatTags(bookmark.tags);
-      const collections = formatCollections(bookmark.collections);
-      const faviconUrl = bookmark.favicon_url || "";
-      const createdRaw = bookmark.created_at || "";
-      const createdAt = utils2.formatDate(createdRaw, config2.DATE_LOCALE, {
-        year: "numeric",
-        month: "short",
-        day: "numeric"
-      });
-      const contentParts = [];
-      contentParts.push(`<h3 class="bookmark-title">${escapeHtml(title)}</h3>`);
-      const headerHtml = buildHeader(domain, faviconUrl);
-      if (headerHtml) contentParts.push(headerHtml);
-      if (description) {
-        contentParts.push(`<p class="bookmark-description">${escapeHtml(description)}</p>`);
-      }
-      const tagsHtml = buildTags(tags);
-      if (tagsHtml) contentParts.push(tagsHtml);
-      const collectionsHtml = buildCollections(collections);
-      if (collectionsHtml) contentParts.push(collectionsHtml);
-      const footerHtml = buildFooter(createdAt, url);
-      if (footerHtml) contentParts.push(footerHtml);
-      const contentInner = contentParts.map((part) => part.split("\n").map((line) => "        " + line).join("\n")).join("\n\n");
-      const innerHtml = `<article class="bookmark-card" data-created="${escapeHtml(createdRaw)}">
-
-    ${buildImageWrapper(imageUrl).split("\n").map((l, i) => i === 0 ? l : "    " + l).join("\n")}
-
-    <div class="bookmark-content">
-
-${contentInner}
-
+    function generateMarkdown(data) {
+      const name = data.name || "Unknown Location";
+      const link = data.link || "#";
+      const reviewsUrl = data.reviews_url || "#";
+      const photos = data.photos && data.photos.length > 0 ? data.photos : data.thumbnail ? [data.thumbnail] : [];
+      let photosHtml = "";
+      if (photos.length > 0) {
+        const imagesStr = photos.map((url) => `<img src="${url}" alt="Photo of ${name}" loading="lazy" referrerpolicy="no-referrer" />`).join("");
+        photosHtml = `
+<div class="bucketlist-carousel-wrapper">
+    <div class="bucketlist-carousel">
+        ${imagesStr}
     </div>
-
-</article>`;
-      return `${innerHtml}`;
-    }
-    module2.exports = {
-      buildBookmarkBlock,
-      resolveImageUrl,
-      formatTags,
-      formatCollections
-    };
-  }
-});
-
-// Scripts/BookmarkManager/sorter.js
-var require_sorter = __commonJS({
-  "Scripts/BookmarkManager/sorter.js"(exports2, module2) {
-    var config2 = require_config();
-    var logger2 = require_logger();
-    var BOOKMARK_BLOCK_REGEX = /<!-- BOOKMARK:[\w-]+ -->[\s\S]*?<!-- END BOOKMARK -->/g;
-    var CREATED_AT_LINE_REGEX = /data-created="([^"]+)"/;
-    function parseTimestamp(dateStr) {
-      if (!dateStr) return 0;
-      const ms = new Date(dateStr.trim()).getTime();
-      return isNaN(ms) ? 0 : ms;
-    }
-    function extractTimestamp(block) {
-      const match = block.match(CREATED_AT_LINE_REGEX);
-      if (!match) return 0;
-      return parseTimestamp(match[1]);
-    }
-    function sortBookmarks(content, order) {
-      const sortOrder = (order || config2.SORT_ORDER || "desc").toLowerCase();
-      const blocks = content.match(BOOKMARK_BLOCK_REGEX);
-      if (!blocks || blocks.length <= 1) {
-        return { sorted: content, count: blocks ? blocks.length : 0 };
+</div>`;
       }
-      const firstBlockStart = content.indexOf(blocks[0]);
-      const lastBlock = blocks[blocks.length - 1];
-      const lastBlockEnd = content.indexOf(lastBlock) + lastBlock.length;
-      const header = content.slice(0, firstBlockStart);
-      const footer = content.slice(lastBlockEnd);
-      const sorted = [...blocks].sort((a, b) => {
-        const tsA = extractTimestamp(a);
-        const tsB = extractTimestamp(b);
-        return sortOrder === "asc" ? tsA - tsB : tsB - tsA;
-      });
-      const body = sorted.join("\n\n");
-      const result = header.trimEnd() + "\n\n" + body + "\n" + footer.trimStart();
-      logger2.sort("file", sorted.length);
-      return { sorted: result.trim() + "\n", count: sorted.length };
+      const checked = data.isChecked ? "x" : " ";
+      const completedClass = data.isChecked ? " bucketlist-completed" : "";
+      const html = `
+- [${checked}] **${name}**
+<div class="bucketlist-card${completedClass}">
+    ${photosHtml}
+    <div class="bucketlist-details">
+        <h3><a href="${link}" target="_blank" rel="noopener">${name}</a></h3>
+        <a href="${link}" class="bucketlist-main-btn" target="_blank">View on Maps</a>
+    </div>
+</div>
+`;
+      return `
+${html.trim()}
+`;
     }
     module2.exports = {
-      sortBookmarks,
-      extractTimestamp,
-      BOOKMARK_BLOCK_REGEX
+      generateMarkdown
     };
   }
 });
 
-// Scripts/BookmarkManager/updater.js
+// Scripts/BucketlistManager/updater.js
 var require_updater = __commonJS({
-  "Scripts/BookmarkManager/updater.js"(exports2, module2) {
+  "Scripts/BucketlistManager/updater.js"(exports2, module2) {
     var logger2 = require_logger();
-    var markdown = require_markdown();
-    var sorter = require_sorter();
-    function buildBlockRegex(externalId) {
-      const escaped = externalId.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    var parser = require_parser();
+    function buildBlockRegex(link) {
+      const escaped = link.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
       return new RegExp(
-        `<!-- BOOKMARK:${escaped} -->[\\s\\S]*?<!-- END BOOKMARK -->`,
+        `<!-- BUCKETLIST:${escaped} -->[\\s\\S]*?<!-- END BUCKETLIST -->`,
         "g"
       );
     }
-    function bookmarkExists(content, externalId) {
-      if (!content || !externalId) return false;
-      return buildBlockRegex(externalId).test(content);
+    function itemExists(content, link) {
+      if (!content || !link) return false;
+      return buildBlockRegex(link).test(content);
     }
-    async function upsertBookmark(fileManager, filePath, bookmark) {
-      const externalId = bookmark.external_id;
-      if (!externalId) {
-        throw new Error("Bookmark is missing external_id \u2014 cannot upsert.");
+    async function upsertBucketlist(fileManager, filePath, data) {
+      const link = data.link;
+      if (!link) {
+        throw new Error("Data is missing link \u2014 cannot upsert.");
       }
-      const newBlock = markdown.buildBookmarkBlock(bookmark);
+      const newBlock = parser.generateMarkdown(data);
       let content = "";
       let action;
       if (fileManager.fileExists(filePath)) {
         content = await fileManager.readFile(filePath);
       }
-      if (bookmarkExists(content, externalId)) {
-        logger2.upsert("UPDATE", externalId, filePath);
-        const regex = buildBlockRegex(externalId);
-        content = content.replace(regex, newBlock);
+      if (itemExists(content, link)) {
+        logger2.upsert("UPDATE", link, filePath);
+        const regex = buildBlockRegex(link);
+        const match = content.match(regex);
+        if (match && match[0].includes("- [x]")) {
+          data.isChecked = true;
+        }
+        const newBlock2 = parser.generateMarkdown(data);
+        content = content.replace(regex, newBlock2);
         action = "updated";
       } else {
-        logger2.upsert("INSERT", externalId, filePath);
+        logger2.upsert("INSERT", link, filePath);
         if (content.trim().length > 0) {
           content = content.trimEnd() + "\n\n" + newBlock + "\n";
         } else {
@@ -626,14 +439,12 @@ var require_updater = __commonJS({
         }
         action = "created";
       }
-      const { sorted, count } = sorter.sortBookmarks(content);
-      logger2.sort(filePath, count);
-      await fileManager.writeFile(filePath, sorted);
+      await fileManager.writeFile(filePath, content);
       return { action };
     }
     module2.exports = {
-      upsertBookmark,
-      bookmarkExists
+      upsertBucketlist,
+      itemExists
     };
   }
 });
@@ -747,12 +558,11 @@ var require_fileManager = __commonJS({
   }
 });
 
-// Scripts/BookmarkManager/addBookmark.js
+// Scripts/BucketlistManager/addBucketlist.js
 var config = require_config();
 var logger = require_logger();
 var utils = require_utils();
 var api = require_api();
-var parser = require_parser();
 var updater = require_updater();
 var { createFileManager } = require_fileManager();
 function notice(message, duration = 4e3) {
@@ -767,77 +577,53 @@ function errorNotice(message, duration = 6e3) {
   }
   logger.error(message);
 }
-async function getUrlFromClipboard(quickAddApi) {
-  let clipboardText = null;
-  try {
-    notice("\u{1F4CB} Reading clipboard\u2026");
-    clipboardText = await navigator.clipboard.readText();
-    clipboardText = (clipboardText || "").trim();
-  } catch (err) {
-    logger.debug("Clipboard read failed:", err.message);
-  }
-  if (clipboardText && utils.isValidUrl(clipboardText)) {
-    logger.debug("URL from clipboard:", clipboardText);
-    return clipboardText;
-  }
-  const prompted = await quickAddApi.inputPrompt(
-    "Enter or paste bookmark URL",
-    clipboardText || "https://",
-    clipboardText || ""
-  );
-  if (!prompted || !prompted.trim()) {
-    return null;
-  }
-  return prompted.trim();
-}
-async function addBookmark(params) {
+async function addBucketlist(params) {
   const { app, quickAddApi } = params;
   try {
-    const url = await getUrlFromClipboard(quickAddApi);
-    if (!url) {
-      notice("Bookmark cancelled \u2014 no URL provided.");
+    const prompted = await quickAddApi.inputPrompt(
+      "Enter Google Maps URL for Bucketlist",
+      "https://maps.app.goo.gl/...",
+      ""
+    );
+    if (!prompted || !prompted.trim()) {
+      notice("Bucketlist cancelled \u2014 no URL provided.");
       return;
     }
+    const url = prompted.trim();
     if (!utils.isValidUrl(url)) {
       errorNotice("Invalid URL. Please enter a valid http/https URL.");
       return;
     }
     logger.info("Processing URL:", url);
-    notice("\u{1F4E1} Submitting bookmark\u2026");
-    let bookmark;
+    notice("\u{1F4E1} Fetching from Maps...");
+    let data;
     try {
-      bookmark = await api.submitBookmark(url);
+      data = await api.scrapeBucketlist(url);
     } catch (apiError) {
       errorNotice(`API unavailable: ${apiError.message}`);
       return;
     }
-    if (!bookmark || !bookmark.external_id) {
-      errorNotice("API returned an invalid bookmark (missing external_id).");
+    if (!data || !data.link) {
+      errorNotice("API returned invalid data (missing link).");
       return;
     }
-    logger.debug("Bookmark received:", bookmark.external_id, bookmark.title);
+    logger.debug("Data received:", data.name);
     const fm = createFileManager(app);
-    const folder = config.BOOKMARK_FOLDER || "Bookmarks";
+    const folder = config.BUCKETLIST_FOLDER || "Bucketlist";
     await fm.ensureFolder(folder);
-    const filePath = parser.getDestinationPath(bookmark);
+    const filePath = `${folder}/googlemaps.md`;
     logger.info("Destination:", filePath);
-    const pathParts = filePath.split("/");
-    if (pathParts.length > 2) {
-      const subFolder = pathParts.slice(0, -1).join("/");
-      await fm.ensureFolder(subFolder);
-    }
-    notice("\u{1F4DD} Saving bookmark\u2026");
-    const { action } = await updater.upsertBookmark(fm, filePath, bookmark);
-    const title = bookmark.title || "Untitled";
+    notice("\u{1F4DD} Saving bucketlist item\u2026");
+    const { action } = await updater.upsertBucketlist(fm, filePath, data);
+    const title = data.name || "Untitled";
     if (action === "updated") {
-      notice(`\u{1F504} Bookmark updated: ${title}`);
+      notice(`\u{1F504} Updated: ${title}`);
     } else {
-      notice(`\u2705 Bookmark created: ${title}`);
+      notice(`\u2705 Created: ${title}`);
     }
-    logger.info(`Done \u2014 ${action}: "${title}" \u2192 ${filePath}`);
   } catch (error) {
     errorNotice(`Unexpected error: ${error.message}`);
     logger.error("Unhandled error:", error);
   }
 }
-module.exports = addBookmark;
+module.exports = addBucketlist;

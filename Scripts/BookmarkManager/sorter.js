@@ -5,8 +5,8 @@
  * @module sorter
  */
 
-const config = require('./config');
-const logger = require('./logger');
+const config = require('../utils/config');
+const logger = require('../utils/logger');
 
 /**
  * Regular expression that matches a complete bookmark block including markers.

@@ -6,7 +6,7 @@
  * @module updater
  */
 
-const logger = require('./logger');
+const logger = require('../utils/logger');
 const markdown = require('./markdown');
 const sorter = require('./sorter');
 
