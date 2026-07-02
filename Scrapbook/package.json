@@ -1,0 +1,27 @@
+{
+	"name": "obsidian-scrapbook",
+	"version": "1.0.0",
+	"description": "Obsidian plugin to render Markdown notes as beautiful scrapbook/journal pages.",
+	"main": "main.js",
+	"scripts": {
+		"dev": "node esbuild.config.mjs",
+		"build": "node esbuild.config.mjs production"
+	},
+	"keywords": [
+		"obsidian",
+		"plugin",
+		"scrapbook",
+		"journal",
+		"polaroid"
+	],
+	"author": "Alex Antony",
+	"license": "MIT",
+	"devDependencies": {
+		"@types/node": "^20.11.0",
+		"builtin-modules": "^4.0.0",
+		"esbuild": "^0.21.0",
+		"obsidian": "latest",
+		"typescript": "^5.4.0",
+		"tslib": "^2.6.0"
+	}
+}

@@ -1,0 +1,728 @@
+/* ============================================================
+ * SCRAPBOOK PLUGIN – styles.css
+ * 
+ * A scrapbook/journal aesthetic with Polaroid photo cards,
+ * paper textures, masking tape, and handwritten captions.
+ *
+ * Sections:
+ *   1. CSS Variables (Light + Dark)
+ *   2. Container Layout
+ *   3. Polaroid Cards
+ *   4. Image Frame
+ *   5. Captions
+ *   6. Tape Decoration
+ *   7. Paper Textures & Notebook Lines
+ *   8. Coffee Stain & Torn Edges
+ *   9. Placeholder / Error States
+ *  10. Responsive Breakpoints
+ *  11. Dark Mode Overrides
+ *  12. Animations & Hover Effects
+ *  13. Utilities
+ * ============================================================ */
+
+
+/* ============================================================
+ * 1. CSS VARIABLES
+ * ============================================================ */
+
+:root {
+	/* Polaroid card */
+	--scrap-border-color: #fffef5;
+	--scrap-shadow: 0 4px 14px rgba(0, 0, 0, 0.15),
+	                0 1px 4px rgba(0, 0, 0, 0.08);
+	--scrap-radius: 2px;
+	--scrap-width: 260px;
+
+	/* Caption */
+	--scrap-caption: 'Caveat', 'Segoe Print', 'Patrick Hand', 'Comic Sans MS', cursive;
+
+	/* Container / paper */
+	--scrap-bg: #f5f0e8;
+	--scrap-paper: #faf8f2;
+
+	/* Tape */
+	--scrap-tape-color: rgba(210, 190, 140, 0.55);
+	--scrap-tape-opacity: 0.85;
+
+	/* Notebook lines */
+	--scrap-line-color: rgba(120, 160, 210, 0.18);
+	--scrap-margin-color: rgba(220, 90, 90, 0.2);
+
+	/* Misc */
+	--scrap-transition: 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+	--scrap-hover-lift: -6px;
+	--scrap-hover-shadow: 0 12px 32px rgba(0, 0, 0, 0.18),
+	                      0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+
+/* ============================================================
+ * 2. CONTAINER LAYOUT
+ * ============================================================ */
+
+.scrapbook-container {
+	position: relative;
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: center;
+	align-items: flex-start;
+	gap: 20px;
+	padding: 40px 30px 50px;
+	min-height: 200px;
+	background-color: var(--scrap-bg);
+	border-radius: 6px;
+	overflow: hidden;
+
+	/* Subtle paper border */
+	border: 1px solid rgba(0, 0, 0, 0.06);
+	box-shadow: inset 0 0 60px rgba(0, 0, 0, 0.03);
+}
+
+.scrapbook-container.scrapbook-transparent-bg {
+	background: transparent !important;
+	border: none !important;
+	box-shadow: none !important;
+}
+
+
+/* ============================================================
+ * 3. POLAROID CARDS
+ * ============================================================ */
+
+.scrapbook-polaroid {
+	position: relative;
+	display: inline-flex;
+	flex-direction: column;
+	width: var(--scrap-width);
+	background-color: var(--scrap-border-color);
+
+	/* Classic Polaroid border: thick sides, extra-thick bottom for caption */
+	padding: 12px 12px 8px 12px;
+	border-radius: var(--scrap-radius);
+
+	/* Slight paper texture feel */
+	transition: transform var(--scrap-transition),
+	            box-shadow var(--scrap-transition);
+
+	/* Prevent selection drag on cards */
+	user-select: none;
+	-webkit-user-select: none;
+}
+
+.scrapbook-polaroid.scrapbook-shadow {
+	box-shadow: var(--scrap-shadow);
+}
+
+.scrapbook-polaroid.scrapbook-rounded {
+	border-radius: 6px;
+}
+
+.scrapbook-polaroid.scrapbook-rounded .scrapbook-frame {
+	border-radius: 4px;
+}
+
+
+/* ============================================================
+ * 4. IMAGE FRAME
+ * ============================================================ */
+
+.scrapbook-frame {
+	position: relative;
+	width: 100%;
+	overflow: hidden;
+	border-radius: 1px;
+	background-color: #e8e4dc;
+	min-height: 160px;
+
+	/* Subtle inner shadow for photo realism */
+	box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.scrapbook-image {
+	display: block;
+	width: 100%;
+	height: auto;
+	object-fit: cover;
+	border-radius: 1px;
+}
+
+.scrapbook-image-error {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	min-height: 160px;
+	padding: 20px;
+	color: #999;
+	font-size: 0.85em;
+	text-align: center;
+}
+
+.scrapbook-image-error span {
+	font-size: 2em;
+	margin-bottom: 8px;
+	opacity: 0.6;
+}
+
+.scrapbook-image-error p {
+	margin: 0;
+	word-break: break-word;
+}
+
+
+/* ============================================================
+ * 5. CAPTIONS
+ * ============================================================ */
+
+.scrapbook-caption {
+	padding: 10px 6px 6px;
+	text-align: center;
+	min-height: 28px;
+}
+
+.scrapbook-caption p {
+	margin: 0;
+	font-family: var(--scrap-caption);
+	font-size: 1.05em;
+	line-height: 1.3;
+	color: #4a4540;
+	letter-spacing: 0.02em;
+	word-break: break-word;
+}
+
+
+/* ============================================================
+ * 6. TAPE DECORATION
+ * 
+ * Renders as a translucent strip across the top of the card,
+ * mimicking real masking/washi tape pinning a photo down.
+ * ============================================================ */
+
+.scrapbook-tape {
+	position: absolute;
+	top: -8px;
+	left: 50%;
+	transform: translateX(-50%);
+	width: 70px;
+	height: 22px;
+	background: var(--scrap-tape-color);
+	opacity: var(--scrap-tape-opacity);
+	z-index: 10;
+	pointer-events: none;
+
+	/* Tape texture: semi-transparent with rough edges */
+	border-radius: 1px;
+	box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+
+	/* Simulate tape edge irregularity */
+	clip-path: polygon(
+		0% 8%,
+		4% 0%,
+		12% 5%,
+		20% 2%,
+		30% 6%,
+		40% 0%,
+		50% 4%,
+		60% 1%,
+		70% 5%,
+		80% 0%,
+		88% 3%,
+		96% 0%,
+		100% 7%,
+		100% 92%,
+		97% 100%,
+		90% 95%,
+		82% 100%,
+		74% 96%,
+		65% 100%,
+		55% 97%,
+		45% 100%,
+		35% 95%,
+		25% 100%,
+		18% 96%,
+		10% 100%,
+		3% 97%,
+		0% 93%
+	);
+}
+
+
+/* ============================================================
+ * 7. PAPER TEXTURES & NOTEBOOK LINES
+ * ============================================================ */
+
+/* Paper grain texture – uses a subtle noise pattern via CSS */
+.scrapbook-paper-texture {
+	background-color: var(--scrap-paper);
+	background-image:
+		/* Fine grain noise simulation */
+		repeating-conic-gradient(
+			rgba(0, 0, 0, 0.015) 0%,
+			transparent 0.5%,
+			transparent 1%
+		),
+		/* Slight fiber lines */
+		linear-gradient(
+			125deg,
+			transparent 40%,
+			rgba(0, 0, 0, 0.01) 40.5%,
+			transparent 41%
+		);
+}
+
+/* Notebook ruled lines */
+.scrapbook-notebook {
+	background-image:
+		/* Horizontal ruled lines */
+		repeating-linear-gradient(
+			to bottom,
+			transparent,
+			transparent 27px,
+			var(--scrap-line-color) 27px,
+			var(--scrap-line-color) 28px
+		),
+		/* Left margin line */
+		linear-gradient(
+			to right,
+			transparent 60px,
+			var(--scrap-margin-color) 60px,
+			var(--scrap-margin-color) 61px,
+			transparent 61px
+		);
+}
+
+/* Paper grain overlay class (toggleable) */
+.scrapbook-grain::after {
+	content: '';
+	position: absolute;
+	inset: 0;
+	opacity: 0.04;
+	pointer-events: none;
+	z-index: 0;
+	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+	mix-blend-mode: multiply;
+}
+
+/* Coffee stain decoration (toggleable) */
+.scrapbook-coffee-stain::before {
+	content: '';
+	position: absolute;
+	width: 80px;
+	height: 80px;
+	border-radius: 50%;
+	background: radial-gradient(
+		circle,
+		transparent 30%,
+		rgba(139, 90, 43, 0.06) 35%,
+		rgba(139, 90, 43, 0.03) 50%,
+		transparent 55%
+	);
+	right: 25px;
+	bottom: 35px;
+	pointer-events: none;
+	z-index: 0;
+}
+
+/* Torn edge effect (toggleable) */
+.scrapbook-torn-edge {
+	border-bottom: none;
+	border-bottom-left-radius: 0;
+	border-bottom-right-radius: 0;
+	clip-path: polygon(
+		0% 0%,
+		100% 0%,
+		100% 95%,
+		98% 96%,
+		95% 94%,
+		92% 97%,
+		88% 95%,
+		85% 98%,
+		80% 95%,
+		76% 97%,
+		72% 94%,
+		68% 96%,
+		64% 94%,
+		60% 97%,
+		56% 95%,
+		52% 98%,
+		48% 95%,
+		44% 97%,
+		40% 94%,
+		36% 96%,
+		32% 94%,
+		28% 97%,
+		24% 95%,
+		20% 98%,
+		16% 95%,
+		12% 97%,
+		8% 94%,
+		4% 96%,
+		0% 95%
+	);
+}
+
+
+/* ============================================================
+ * 8. UPLOAD ZONE & PLACEHOLDER
+ * ============================================================ */
+
+/* ── Shared upload zone base ─────────────────── */
+.scrapbook-upload-zone {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	text-align: center;
+	cursor: pointer;
+	border: 2px dashed rgba(0, 0, 0, 0.12);
+	border-radius: 8px;
+	transition: all var(--scrap-transition);
+	user-select: none;
+	-webkit-user-select: none;
+	position: relative;
+	overflow: hidden;
+}
+
+.scrapbook-upload-zone:hover {
+	border-color: rgba(0, 0, 0, 0.25);
+	background-color: rgba(0, 0, 0, 0.02);
+	transform: scale(1.01);
+}
+
+.scrapbook-upload-zone:active {
+	transform: scale(0.98);
+}
+
+/* ── Empty state: large prominent zone ───────── */
+.scrapbook-upload-empty {
+	width: 100%;
+	min-height: 180px;
+	padding: 32px 24px;
+	gap: 8px;
+}
+
+/* ── Floating state: small button in corner ────── */
+.scrapbook-upload-floating {
+	position: absolute;
+	bottom: 16px;
+	right: 16px;
+	width: 48px;
+	height: 48px;
+	padding: 0;
+	border-radius: 4px;
+	background-color: var(--scrap-bg);
+	border: 2px dashed rgba(0, 0, 0, 0.15);
+	z-index: 100;
+}
+
+/* ── Icon ─────────────────────────────────────── */
+.scrapbook-upload-icon {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	color: #9a9590;
+	transition: color var(--scrap-transition), transform var(--scrap-transition);
+}
+
+.scrapbook-upload-zone:hover .scrapbook-upload-icon {
+	color: #6a6560;
+	transform: translateY(-2px);
+}
+
+.scrapbook-upload-icon svg {
+	width: 32px;
+	height: 32px;
+}
+
+.scrapbook-upload-floating .scrapbook-upload-icon svg {
+	width: 24px;
+	height: 24px;
+}
+
+/* ── Text ─────────────────────────────────────── */
+.scrapbook-upload-text {
+	margin: 4px 0 0;
+	font-size: 0.95em;
+	font-weight: 500;
+	color: #7a7570;
+	letter-spacing: 0.01em;
+}
+
+
+
+.scrapbook-upload-hint {
+	margin: 2px 0 0;
+	font-size: 0.78em;
+	color: #b0a8a0;
+}
+
+/* ── Loading state ────────────────────────────── */
+.scrapbook-upload-loading {
+	pointer-events: none;
+	opacity: 0.6;
+}
+
+.scrapbook-upload-loading::after {
+	content: '';
+	position: absolute;
+	inset: 0;
+	background: linear-gradient(
+		110deg,
+		transparent 30%,
+		rgba(255, 255, 255, 0.15) 50%,
+		transparent 70%
+	);
+	animation: scrapbook-upload-shimmer 1.2s ease-in-out infinite;
+}
+
+@keyframes scrapbook-upload-shimmer {
+	0% { transform: translateX(-100%); }
+	100% { transform: translateX(100%); }
+}
+
+
+
+/* ============================================================
+ * 9. RESPONSIVE BREAKPOINTS
+ * ============================================================ */
+
+/* ── Desktop: natural overlap arrangement ───────── */
+@media (min-width: 769px) {
+	.scrapbook-container {
+		flex-wrap: nowrap;
+		justify-content: center;
+		padding: 50px 40px 60px;
+	}
+
+	.scrapbook-polaroid {
+		/* Allow cards to overlap slightly */
+		margin-left: -15px;
+		margin-right: -15px;
+	}
+
+	.scrapbook-polaroid:first-child {
+		margin-left: 0;
+	}
+
+	.scrapbook-polaroid:last-child {
+		margin-right: 0;
+	}
+}
+
+/* ── Tablet: reduced overlap ────────────────────── */
+@media (min-width: 481px) and (max-width: 768px) {
+	.scrapbook-container {
+		flex-wrap: wrap;
+		gap: 16px;
+		padding: 30px 20px 40px;
+	}
+
+	.scrapbook-polaroid {
+		margin-left: -5px;
+		margin-right: -5px;
+		max-width: 220px;
+	}
+}
+
+/* ── Mobile: stacked vertically ─────────────────── */
+@media (max-width: 480px) {
+	.scrapbook-container {
+		flex-direction: column;
+		align-items: center;
+		gap: 24px;
+		padding: 24px 16px 32px;
+	}
+
+	.scrapbook-polaroid {
+		/* Preserve slight rotations but remove offset transforms */
+		margin: 0 !important;
+		max-width: 90%;
+		/* Keep rotation only, ignore translate for stacking */
+	}
+
+	.scrapbook-tape {
+		width: 55px;
+		height: 18px;
+	}
+}
+
+
+/* ============================================================
+ * 10. DARK MODE OVERRIDES
+ * ============================================================ */
+
+.theme-dark {
+	--scrap-border-color: #2a2825;
+	--scrap-shadow: 0 4px 14px rgba(0, 0, 0, 0.4),
+	                0 1px 4px rgba(0, 0, 0, 0.25);
+	--scrap-bg: #1e1c1a;
+	--scrap-paper: #242220;
+	--scrap-tape-color: rgba(160, 140, 100, 0.4);
+	--scrap-line-color: rgba(100, 140, 190, 0.1);
+	--scrap-margin-color: rgba(200, 80, 80, 0.12);
+	--scrap-hover-shadow: 0 12px 32px rgba(0, 0, 0, 0.45),
+	                      0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.theme-dark .scrapbook-caption p {
+	color: #c8c4be;
+}
+
+.theme-dark .scrapbook-frame {
+	background-color: #333;
+	box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.theme-dark .scrapbook-image-error {
+	color: #777;
+}
+
+.theme-dark .scrapbook-upload-zone {
+	border-color: rgba(255, 255, 255, 0.1);
+}
+
+.theme-dark .scrapbook-upload-zone:hover {
+	border-color: rgba(255, 255, 255, 0.2);
+	background-color: rgba(255, 255, 255, 0.03);
+}
+
+.theme-dark .scrapbook-upload-icon {
+	color: #666;
+}
+
+.theme-dark .scrapbook-upload-zone:hover .scrapbook-upload-icon {
+	color: #999;
+}
+
+.theme-dark .scrapbook-upload-text {
+	color: #888;
+}
+
+.theme-dark .scrapbook-upload-hint {
+	color: #666;
+}
+
+.theme-dark .scrapbook-coffee-stain::before {
+	background: radial-gradient(
+		circle,
+		transparent 30%,
+		rgba(100, 70, 30, 0.08) 35%,
+		rgba(100, 70, 30, 0.04) 50%,
+		transparent 55%
+	);
+}
+
+
+/* ============================================================
+ * 11. ANIMATIONS & HOVER EFFECTS
+ * ============================================================ */
+
+/* Subtle lift on hover – makes cards feel interactive */
+.scrapbook-polaroid:hover {
+	transform: translateY(var(--scrap-hover-lift)) !important;
+	z-index: 100 !important;
+}
+
+.scrapbook-polaroid.scrapbook-shadow:hover {
+	box-shadow: var(--scrap-hover-shadow);
+}
+
+/* Smooth fade-in when the container first renders */
+@keyframes scrapbook-fade-in {
+	from {
+		opacity: 0;
+		transform: translateY(10px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+.scrapbook-container {
+	animation: scrapbook-fade-in 0.4s ease-out;
+}
+
+/* Staggered card entrance */
+.scrapbook-polaroid:nth-child(1) { animation: scrapbook-card-in 0.4s 0.05s ease-out both; }
+.scrapbook-polaroid:nth-child(2) { animation: scrapbook-card-in 0.4s 0.15s ease-out both; }
+
+@keyframes scrapbook-card-in {
+	from {
+		opacity: 0;
+		transform: scale(0.92);
+	}
+	to {
+		opacity: 1;
+		transform: scale(1);
+	}
+}
+
+/* Image shimmer while loading */
+.scrapbook-frame::before {
+	content: '';
+	position: absolute;
+	inset: 0;
+	background: linear-gradient(
+		110deg,
+		transparent 25%,
+		rgba(255, 255, 255, 0.05) 37%,
+		transparent 63%
+	);
+	z-index: 1;
+	pointer-events: none;
+}
+
+
+/* ============================================================
+ * 12. UTILITIES
+ * ============================================================ */
+
+/* Force a card to have no rotation */
+.scrapbook-no-rotate {
+	transform: rotate(0deg) !important;
+}
+
+/* Force a card to be centered */
+.scrapbook-centered {
+	margin-left: auto !important;
+	margin-right: auto !important;
+}
+
+/* Hide tape decoration */
+.scrapbook-no-tape .scrapbook-tape {
+	display: none;
+}
+
+/* Print-friendly styles */
+@media print {
+	.scrapbook-container {
+		background: white !important;
+		box-shadow: none !important;
+		border: 1px solid #ddd !important;
+		animation: none !important;
+		break-inside: avoid;
+	}
+
+	.scrapbook-polaroid {
+		box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+		animation: none !important;
+		break-inside: avoid;
+	}
+
+	.scrapbook-tape {
+		display: none;
+	}
+
+	.scrapbook-upload-zone {
+		display: none;
+	}
+}
+
+/* ── Multi-container spacing ─────────────────── */
+/* When a single code block produces multiple containers (overflow) */
+.scrapbook-container + .scrapbook-container {
+	margin-top: 16px;
+}
+
+

@@ -1,0 +1,10 @@
+{
+	"id": "scrapbook",
+	"name": "Scrapbook",
+	"version": "1.0.0",
+	"minAppVersion": "1.4.0",
+	"description": "Transform ordinary Markdown notes into beautiful scrapbook/journal pages with Polaroid-style photo cards.",
+	"author": "Alex Antony",
+	"authorUrl": "",
+	"isDesktopOnly": false
+}
